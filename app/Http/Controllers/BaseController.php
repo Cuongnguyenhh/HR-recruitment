@@ -4,29 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Model;
-/**
- * @OA\Get(
- *     path="/api/users",
- *     tags={"Users"},
- *     summary="Get list of users",
- *     description="Returns list of users",
- *     @OA\Response(
- *         response=200,
- *         description="successful operation"
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="Unauthenticated"
- *     ),
- * )
- */
+use Ramsey\Uuid\Uuid;
+
 class BaseController extends Controller
 {
     protected $model;
     public function __construct(Model $model)
     {
         $this->model = $model;
-        $this->middleware('auth:sanctum')->except('login','register');
+        $this->middleware('auth:sanctum')->except('login', 'register');
     }
 
     public function index()
@@ -42,16 +28,26 @@ class BaseController extends Controller
         }
         return response()->json(
             [
-            'status' => true,
-            'data'=>$items
-        ], 200);
+                'status' => true,
+                'data' => $items
+            ],
+            200
+        );
     }
 
     public function store(Request $request)
     {
-        $validateData = $request->validate($this->validationRule());
-        $item = $this->model->create($validateData);
-        return response()->json($item, 201);
+        try {
+            $validateData = $request->validate($this->validationRule());
+
+            $validateData['id'] = Uuid::uuid4()->toString();
+
+            $item = $this->model->create($validateData);
+            
+            return response()->json($item, 201);
+        } catch (\Exception $ex) {
+            return response()->json($ex, 500);
+        }
     }
 
     public function update(Request $request, $id)
@@ -84,10 +80,11 @@ class BaseController extends Controller
         }
         $item->update(
             [
-            'is_active' => false,
-            'is_deleted' => true,
-            'deleted_time' => time(),  
-        ]);
+                'is_active' => false,
+                'is_deleted' => true,
+                'deleted_time' => time(),
+            ]
+        );
         return response()->json(['message' => 'Item deleted'], 204);
     }
     protected function validationRule()

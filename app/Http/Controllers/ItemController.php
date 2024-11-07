@@ -15,11 +15,12 @@ class ItemController extends BaseController
     protected function validationRule()
     {
         return [
+        
             'name' =>'required|max:255',
             'description' =>'required',
             'price' =>'required|numeric',
             'quantity' =>'required|numeric',
-            'category_id' =>'required|numeric',
+            // 'category_id' =>'required|numeric',
         ];
     }
 }
